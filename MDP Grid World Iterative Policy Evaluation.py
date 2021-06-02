@@ -23,6 +23,10 @@ counter_walls = 0
 while counter_walls <= 10:
     grid_world_ndarray[random.randint(0,vertical_dim-1) , random.randint(0,horizontal_dim-1)] = digit_for_representing_the_wall
     counter_walls += 1
+
+grid_world_ndarray[0,horizontal_dim - 1] = 0
+grid_world_ndarray[1,horizontal_dim - 1] = 0
+
 plt.imshow(grid_world_ndarray, interpolation='none')
 plt.savefig('gridworld.png')
 
