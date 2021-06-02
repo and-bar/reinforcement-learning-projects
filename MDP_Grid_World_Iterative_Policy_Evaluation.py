@@ -26,6 +26,8 @@ while counter_walls <= 10:
 
 grid_world_ndarray[0,horizontal_dim - 1] = 0
 grid_world_ndarray[1,horizontal_dim - 1] = 0
+grid_world_ndarray[0,horizontal_dim - 2] = 0
+grid_world_ndarray[1,horizontal_dim - 2] = 0
 
 plt.imshow(grid_world_ndarray, interpolation='none')
 plt.savefig('gridworld.png')
@@ -35,8 +37,8 @@ V_of_S_for_every_state_ndarray = np.zeros([vertical_dim, horizontal_dim])
 
 # Creating grid of rewards of every state
 rewards_ndarray = np.zeros([vertical_dim, horizontal_dim])
-rewards_ndarray[0,horizontal_dim - 1] = 100
-rewards_ndarray[1,horizontal_dim - 1] = 1
+rewards_ndarray[0,horizontal_dim - 1] = 1
+rewards_ndarray[1,horizontal_dim - 1] = -1
 
 def find_all_actions_of_the_state(tuple_state_for_searching):
     """
@@ -78,7 +80,7 @@ def iterative_policy_evaluation():
     """
     Calculating V of S for every state in state space
     """    
-    min_value = 0.000001 # when traspasing this value to the less then stop while loop
+    min_value = 0.0000000001 # when traspasing this value to the less then stop while loop
     delta_max = min_value + 1
     gamma_value = 0.9
     while delta_max >= min_value:
@@ -110,3 +112,5 @@ V_of_S_for_every_state_df = pd.DataFrame(V_of_S_for_every_state_ndarray)
 filepath = 'V_of_S_for_every_state_ndarray.xlsx'
 V_of_S_for_every_state_df.to_excel(filepath, index=False)
 
+plt.imshow(V_of_S_for_every_state_df, interpolation='none')
+plt.savefig('V_of_S_space_states.png')
