@@ -11,8 +11,8 @@ np.set_printoptions(linewidth=np.inf)
 # zeros agent can pass and ones it a wall
 # Generate Grid world till terminal states : last horisontal to the right and first two vertical of the top not the walls
 
-vertical_dim = 300
-horizontal_dim = 100
+vertical_dim = 10
+horizontal_dim = 10
 digit_for_representing_the_wall = 1
 
 # Announsing terminal states
@@ -127,14 +127,15 @@ def search_best_policy_from_input_state():
     
     grid_best_policy_ndrray[state_vert_coord, state_horizont_coord] = 1
     v_of_s_tuple = (state_vert_coord, state_horizont_coord)
-    while v_of_s_tuple != (0, horizontal_dim-2):
-        actions_of_state_tuple = find_all_actions_of_the_state(v_of_s_tuple)
+    actions_of_state_tuple = find_all_actions_of_the_state(v_of_s_tuple)
+    while not (terminal_states[0] in actions_of_state_tuple):
         # print(f"possible actions {actions_of_state_tuple} for state {v_of_s_tuple}")
         v_of_s_tuple =  actions_of_state_tuple[0]
         for action in actions_of_state_tuple[1:]:
             if V_of_S_for_every_state_ndarray[action] > V_of_S_for_every_state_ndarray[v_of_s_tuple]:
                 v_of_s_tuple = action
         grid_best_policy_ndrray[v_of_s_tuple] = 1
+        actions_of_state_tuple = find_all_actions_of_the_state(v_of_s_tuple)
         # print(f"next state: {v_of_s_tuple}")
         # input("input for the next loop")
     
