@@ -115,9 +115,6 @@ iterative_policy_evaluation()
 # filepath = 'V_of_S_for_every_state_ndarray.xlsx'
 # V_of_S_for_every_state_df.to_excel(filepath, index=False)
 
-# plt.imshow(V_of_S_for_every_state_df, interpolation='none')
-# plt.savefig('V_of_S_space_states.png')
-
 def search_best_policy_from_input_state():
     """
     Function get as input the coordinates of statrting state and
