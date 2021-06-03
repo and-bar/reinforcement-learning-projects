@@ -134,19 +134,12 @@ def search_best_policy_from_input_state():
                 v_of_s_tuple = action
         grid_best_policy_ndrray[v_of_s_tuple] = 1
         actions_of_state_tuple = find_all_actions_of_the_state(v_of_s_tuple)
-        # print(f"next state: {v_of_s_tuple}")
-        # input("input for the next loop")
-    
-    # plt.imshow(grid_best_policy_ndrray, interpolation='none')
-    # plt.savefig('best_policy.png')
 
+    merged_grid_world_best_policy_for_visualising = grid_world_ndarray + grid_best_policy_ndrray
+    merged_grid_world_best_policy_for_visualising[terminal_states[0]] = 3
+    merged_grid_world_best_policy_for_visualising[terminal_states[1]] = 4
+    plt.imshow(merged_grid_world_best_policy_for_visualising, interpolation='none')
+    plt.savefig('best_policy_in_grid_world.png')
 
 grid_best_policy_ndrray = np.zeros((vertical_dim,horizontal_dim))
 search_best_policy_from_input_state()
-
-# Visualising result
-merged_grid_world_best_policy_for_visualising = grid_world_ndarray + grid_best_policy_ndrray
-merged_grid_world_best_policy_for_visualising[terminal_states[0]] = 3
-merged_grid_world_best_policy_for_visualising[terminal_states[1]] = 4
-plt.imshow(merged_grid_world_best_policy_for_visualising, interpolation='none')
-plt.savefig('best_policy_in_grid_world.png')
