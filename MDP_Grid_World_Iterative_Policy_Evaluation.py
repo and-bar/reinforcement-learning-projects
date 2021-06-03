@@ -11,13 +11,16 @@ np.set_printoptions(linewidth=np.inf)
 # zeros agent can pass and ones it a wall
 # Generate Grid world till terminal states : last horisontal to the right and first two vertical of the top not the walls
 
-vertical_dim = 300
-horizontal_dim = 100
-digit_for_representing_the_wall = 1
+
+vertical_dim = 20
+horizontal_dim = 20
+digit_for_representing_the_wall = 2
+
 
 # Announsing terminal states
 terminal_states = [(0, horizontal_dim - 1), (1, horizontal_dim - 1)]
 
+# Creating walls in grid world
 grid_world_ndarray = np.zeros([vertical_dim, horizontal_dim])
 counter_walls = 0
 while counter_walls <= int(vertical_dim*horizontal_dim*0.1):
@@ -31,8 +34,8 @@ grid_world_ndarray[0,horizontal_dim - 2] = 0
 grid_world_ndarray[1,horizontal_dim - 2] = 0
 grid_world_ndarray[vertical_dim-1,0] = 0
 
-plt.imshow(grid_world_ndarray, interpolation='none')
-plt.savefig('gridworld.png')
+# plt.imshow(grid_world_ndarray, interpolation='none')
+# plt.savefig('gridworld.png')
 
 # Creating grid of V(S) of every state and populating it with zeros
 V_of_S_for_every_state_ndarray = np.zeros([vertical_dim, horizontal_dim])
@@ -114,8 +117,6 @@ iterative_policy_evaluation()
 # filepath = 'V_of_S_for_every_state_ndarray.xlsx'
 # V_of_S_for_every_state_df.to_excel(filepath, index=False)
 
-# plt.imshow(V_of_S_for_every_state_df, interpolation='none')
-# plt.savefig('V_of_S_space_states.png')
 
 def search_best_policy_from_input_state():
     """
@@ -127,20 +128,25 @@ def search_best_policy_from_input_state():
     
     grid_best_policy_ndrray[state_vert_coord, state_horizont_coord] = 1
     v_of_s_tuple = (state_vert_coord, state_horizont_coord)
-    while v_of_s_tuple != (0, horizontal_dim-2):
-        actions_of_state_tuple = find_all_actions_of_the_state(v_of_s_tuple)
+
+    actions_of_state_tuple = find_all_actions_of_the_state(v_of_s_tuple)
+    while not (terminal_states[0] in actions_of_state_tuple):
+
         # print(f"possible actions {actions_of_state_tuple} for state {v_of_s_tuple}")
         v_of_s_tuple =  actions_of_state_tuple[0]
         for action in actions_of_state_tuple[1:]:
             if V_of_S_for_every_state_ndarray[action] > V_of_S_for_every_state_ndarray[v_of_s_tuple]:
                 v_of_s_tuple = action
         grid_best_policy_ndrray[v_of_s_tuple] = 1
-        # print(f"next state: {v_of_s_tuple}")
-        # input("input for the next loop")
-    
-    plt.imshow(grid_best_policy_ndrray, interpolation='none')
-    plt.savefig('best_policy.png')
 
+        actions_of_state_tuple = find_all_actions_of_the_state(v_of_s_tuple)
+
+    merged_grid_world_best_policy_for_visualising = grid_world_ndarray + grid_best_policy_ndrray
+    merged_grid_world_best_policy_for_visualising[terminal_states[0]] = 3
+    merged_grid_world_best_policy_for_visualising[terminal_states[1]] = 4
+    plt.imshow(merged_grid_world_best_policy_for_visualising, interpolation='none')
+    plt.savefig('best_policy_in_grid_world.png')
 
 grid_best_policy_ndrray = np.zeros((vertical_dim,horizontal_dim))
 search_best_policy_from_input_state()
+
