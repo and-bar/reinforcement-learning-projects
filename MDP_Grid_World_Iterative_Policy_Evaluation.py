@@ -11,13 +11,14 @@ np.set_printoptions(linewidth=np.inf)
 # zeros agent can pass and ones it a wall
 # Generate Grid world till terminal states : last horisontal to the right and first two vertical of the top not the walls
 
-vertical_dim = 10
-horizontal_dim = 10
-digit_for_representing_the_wall = 1
+vertical_dim = 20
+horizontal_dim = 20
+digit_for_representing_the_wall = 2
 
 # Announsing terminal states
 terminal_states = [(0, horizontal_dim - 1), (1, horizontal_dim - 1)]
 
+# Creating walls in grid world
 grid_world_ndarray = np.zeros([vertical_dim, horizontal_dim])
 counter_walls = 0
 while counter_walls <= int(vertical_dim*horizontal_dim*0.1):
@@ -31,8 +32,8 @@ grid_world_ndarray[0,horizontal_dim - 2] = 0
 grid_world_ndarray[1,horizontal_dim - 2] = 0
 grid_world_ndarray[vertical_dim-1,0] = 0
 
-plt.imshow(grid_world_ndarray, interpolation='none')
-plt.savefig('gridworld.png')
+# plt.imshow(grid_world_ndarray, interpolation='none')
+# plt.savefig('gridworld.png')
 
 # Creating grid of V(S) of every state and populating it with zeros
 V_of_S_for_every_state_ndarray = np.zeros([vertical_dim, horizontal_dim])
@@ -139,9 +140,16 @@ def search_best_policy_from_input_state():
         # print(f"next state: {v_of_s_tuple}")
         # input("input for the next loop")
     
-    plt.imshow(grid_best_policy_ndrray, interpolation='none')
-    plt.savefig('best_policy.png')
+    # plt.imshow(grid_best_policy_ndrray, interpolation='none')
+    # plt.savefig('best_policy.png')
 
 
 grid_best_policy_ndrray = np.zeros((vertical_dim,horizontal_dim))
 search_best_policy_from_input_state()
+
+# Visualising result
+merged_grid_world_best_policy_for_visualising = grid_world_ndarray + grid_best_policy_ndrray
+merged_grid_world_best_policy_for_visualising[terminal_states[0]] = 3
+merged_grid_world_best_policy_for_visualising[terminal_states[1]] = 4
+plt.imshow(merged_grid_world_best_policy_for_visualising, interpolation='none')
+plt.savefig('best_policy_in_grid_world.png')
