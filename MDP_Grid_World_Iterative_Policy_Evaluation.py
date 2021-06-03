@@ -11,9 +11,11 @@ np.set_printoptions(linewidth=np.inf)
 # zeros agent can pass and ones it a wall
 # Generate Grid world till terminal states : last horisontal to the right and first two vertical of the top not the walls
 
+
 vertical_dim = 20
 horizontal_dim = 20
 digit_for_representing_the_wall = 2
+
 
 # Announsing terminal states
 terminal_states = [(0, horizontal_dim - 1), (1, horizontal_dim - 1)]
@@ -115,6 +117,7 @@ iterative_policy_evaluation()
 # filepath = 'V_of_S_for_every_state_ndarray.xlsx'
 # V_of_S_for_every_state_df.to_excel(filepath, index=False)
 
+
 def search_best_policy_from_input_state():
     """
     Function get as input the coordinates of statrting state and
@@ -125,14 +128,17 @@ def search_best_policy_from_input_state():
     
     grid_best_policy_ndrray[state_vert_coord, state_horizont_coord] = 1
     v_of_s_tuple = (state_vert_coord, state_horizont_coord)
+
     actions_of_state_tuple = find_all_actions_of_the_state(v_of_s_tuple)
     while not (terminal_states[0] in actions_of_state_tuple):
+
         # print(f"possible actions {actions_of_state_tuple} for state {v_of_s_tuple}")
         v_of_s_tuple =  actions_of_state_tuple[0]
         for action in actions_of_state_tuple[1:]:
             if V_of_S_for_every_state_ndarray[action] > V_of_S_for_every_state_ndarray[v_of_s_tuple]:
                 v_of_s_tuple = action
         grid_best_policy_ndrray[v_of_s_tuple] = 1
+
         actions_of_state_tuple = find_all_actions_of_the_state(v_of_s_tuple)
 
     merged_grid_world_best_policy_for_visualising = grid_world_ndarray + grid_best_policy_ndrray
@@ -143,3 +149,4 @@ def search_best_policy_from_input_state():
 
 grid_best_policy_ndrray = np.zeros((vertical_dim,horizontal_dim))
 search_best_policy_from_input_state()
+
