@@ -12,8 +12,8 @@ np.set_printoptions(linewidth=np.inf)
 # Generate Grid world till terminal states : last horisontal to the right and first two vertical of the top not the walls
 
 
-vertical_dim = 20
-horizontal_dim = 20
+vertical_dim = 30
+horizontal_dim = 30
 digit_for_representing_the_wall = 2
 
 
@@ -27,7 +27,7 @@ while counter_walls <= int(vertical_dim*horizontal_dim*0.1):
     grid_world_ndarray[random.randint(0,vertical_dim-1) , random.randint(0,horizontal_dim-1)] = digit_for_representing_the_wall
     counter_walls += 1
 
-# cleaning walls in start space and terminal spaces
+# cleaning walls in start space and terminal spaces areas
 grid_world_ndarray[0,horizontal_dim - 1] = 0
 grid_world_ndarray[1,horizontal_dim - 1] = 0
 grid_world_ndarray[0,horizontal_dim - 2] = 0
@@ -81,11 +81,14 @@ def find_all_actions_of_the_state(tuple_state_for_searching):
     return list_of_tuple_actions
 
 # Executing Iterative Policy Evaluation
+min_value = 0.01 # when traspasing this value to the less then stop while loop
+print(f"min_value {min_value}")
 def iterative_policy_evaluation():
     """
     Calculating V of S for every state in state space
     """    
-    min_value = 0.0000000001 # when traspasing this value to the less then stop while loop
+    global min_value
+    
     delta_max = min_value + 1
     gamma_value = 0.9
     while delta_max >= min_value:
@@ -110,7 +113,6 @@ def iterative_policy_evaluation():
         if delta_max < min_value:
             break
 
-iterative_policy_evaluation()
 
 # dumping V of S of all states to excel
 # V_of_S_for_every_state_df = pd.DataFrame(V_of_S_for_every_state_ndarray)
@@ -118,16 +120,25 @@ iterative_policy_evaluation()
 # V_of_S_for_every_state_df.to_excel(filepath, index=False)
 
 
-def search_best_policy_from_input_state():
+def search_best_policy_as_best_action_of_every_state_of_the_policy():
     """
     Function get as input the coordinates of statrting state and
     searching the best policy and saves it and vusualizes it
+    Returns True if reached terminal state
     """
+    
+    global min_value
+
+    reached_terminal_state_boolean = True
+
     state_vert_coord = vertical_dim - 1
     state_horizont_coord  = 0
     
     grid_best_policy_ndrray[state_vert_coord, state_horizont_coord] = 1
     v_of_s_tuple = (state_vert_coord, state_horizont_coord)
+    state_s1 = v_of_s_tuple
+    state_s2 = 0
+    state_s3 = 0
 
     actions_of_state_tuple = find_all_actions_of_the_state(v_of_s_tuple)
     while not (terminal_states[0] in actions_of_state_tuple):
@@ -139,14 +150,39 @@ def search_best_policy_from_input_state():
                 v_of_s_tuple = action
         grid_best_policy_ndrray[v_of_s_tuple] = 1
 
+        # Check if the best action lead to the visited state previously, and thtat confirms internal loop between twostates with two actions
+        if state_s2 == 0:
+            state_s2 = v_of_s_tuple
+        elif state_s3 == 0:
+            state_s3 = v_of_s_tuple
+        else:
+            state_s1 = state_s2
+            state_s2 = state_s3
+            state_s3 = v_of_s_tuple
+            # input('next')
+        if state_s3 == state_s1:
+            print(f'Looping between to states, cant proceed. S1 S2 S3 = {state_s1} {state_s2} {state_s3}')
+            min_value = min_value / 10
+            print(f"min_value {min_value}\n")
+            reached_terminal_state_boolean = False
+            break
+
         actions_of_state_tuple = find_all_actions_of_the_state(v_of_s_tuple)
 
-    merged_grid_world_best_policy_for_visualising = grid_world_ndarray + grid_best_policy_ndrray
-    merged_grid_world_best_policy_for_visualising[terminal_states[0]] = 3
-    merged_grid_world_best_policy_for_visualising[terminal_states[1]] = 4
-    plt.imshow(merged_grid_world_best_policy_for_visualising, interpolation='none')
-    plt.savefig('best_policy_in_grid_world.png')
+    # Returns here True if reached terminal state
+    return reached_terminal_state_boolean
 
-grid_best_policy_ndrray = np.zeros((vertical_dim,horizontal_dim))
-search_best_policy_from_input_state()
+founf_terminal_state = False
+cycle_step = 0
+while (founf_terminal_state == False) and (cycle_step < 50):
+    iterative_policy_evaluation()
+    print("finished Iterative policy evaluation")
+    grid_best_policy_ndrray = np.zeros((vertical_dim,horizontal_dim))
+    founf_terminal_state = search_best_policy_as_best_action_of_every_state_of_the_policy()
+    cycle_step += 1
 
+merged_grid_world_best_policy_for_visualising = grid_world_ndarray + grid_best_policy_ndrray
+merged_grid_world_best_policy_for_visualising[terminal_states[0]] = 3
+merged_grid_world_best_policy_for_visualising[terminal_states[1]] = 4
+plt.imshow(merged_grid_world_best_policy_for_visualising, interpolation='none')
+plt.savefig('policy_not_the_best_that_leads_to_exit_in_grid_world.png')
