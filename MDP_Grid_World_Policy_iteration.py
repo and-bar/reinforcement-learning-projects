@@ -4,38 +4,25 @@ import matplotlib.pyplot as plt
 import sys
 import pandas as pd
 
-# np.set_printoptions(threshold=sys.maxsize)
-# np.set_printoptions(linewidth=np.inf)
-
-# Creating grid world represented by ndarray
-# zeros agent can pass and ones it a wall
-# Generate Grid world till terminal states : last horisontal to the right and first two vertical of the top not the walls
-
-
-vertical_dim = 30
-horizontal_dim = 30
+vertical_dim = 100
+horizontal_dim = 100
 digit_for_representing_the_wall = 2
 
 
 # Announsing terminal states
 terminal_states = [(0, horizontal_dim - 1), (1, horizontal_dim - 1)]
 
-# Creating walls in grid world
+# Creating walls in grid world  and first row and column for assigning starting policy letting free of walls
 grid_world_ndarray = np.zeros([vertical_dim, horizontal_dim])
 counter_walls = 0
-while counter_walls <= int(vertical_dim*horizontal_dim*0.1):
+while counter_walls <= int(vertical_dim*horizontal_dim*0.2):
     grid_world_ndarray[random.randint(0,vertical_dim-1) , random.randint(0,horizontal_dim-1)] = digit_for_representing_the_wall
     counter_walls += 1
 
 # cleaning walls in start space and terminal spaces areas
-grid_world_ndarray[0,horizontal_dim - 1] = 0
 grid_world_ndarray[1,horizontal_dim - 1] = 0
-grid_world_ndarray[0,horizontal_dim - 2] = 0
 grid_world_ndarray[1,horizontal_dim - 2] = 0
 grid_world_ndarray[vertical_dim-1,0] = 0
-
-# plt.imshow(grid_world_ndarray, interpolation='none')
-# plt.savefig('gridworld.png')
 
 # Creating grid of V(S) of every state and populating it with zeros
 V_of_S_for_every_state_ndarray = np.zeros([vertical_dim, horizontal_dim])
@@ -81,14 +68,11 @@ def find_all_actions_of_the_state(tuple_state_for_searching):
     return list_of_tuple_actions
 
 # Executing Iterative Policy Evaluation
-min_value = 0.01 # when traspasing this value to the less then stop while loop
-print(f"min_value {min_value}")
 def iterative_policy_evaluation():
     """
     Calculating V of S for every state in state space
     """    
-    global min_value
-    
+    min_value = 0.0001 # when traspasing this value to the less then stop while loop
     delta_max = min_value + 1
     gamma_value = 0.9
     while delta_max >= min_value:
@@ -113,76 +97,83 @@ def iterative_policy_evaluation():
         if delta_max < min_value:
             break
 
+iterative_policy_evaluation()
 
-# dumping V of S of all states to excel
-# V_of_S_for_every_state_df = pd.DataFrame(V_of_S_for_every_state_ndarray)
-# filepath = 'V_of_S_for_every_state_ndarray.xlsx'
-# V_of_S_for_every_state_df.to_excel(filepath, index=False)
-
-
-def search_best_policy_as_best_action_of_every_state_of_the_policy():
+def policy_fill_the_grid_states_with_actions ():
     """
-    Function get as input the coordinates of statrting state and
-    searching the best policy and saves it and vusualizes it
-    Returns True if reached terminal state
+    Looping thru all states of the state space and finding the best action for every state
     """
+    for state_vertical in range(horizontal_dim):
+        for state_horizontal in range(vertical_dim):
+            if (not ((state_vertical, state_horizontal) in terminal_states)) and (grid_world_ndarray[state_vertical, state_horizontal] != digit_for_representing_the_wall):
+                grid_policy_states_ndarray[state_vertical, state_horizontal] = find_best_action_of_the_state((state_vertical, state_horizontal))
+
+def find_best_action_of_the_state (tuple_state_for_searching):
+    """
+    As input coordenates of state and as output the best action of the state
+    """
+    dict_all_actions_and_its_q_values = {}
+    # Action UP
+    vertical_coord = tuple_state_for_searching[0] - 1    
+    if (vertical_coord >= 0):
+        if (grid_world_ndarray[vertical_coord, tuple_state_for_searching[1]] != digit_for_representing_the_wall):
+             dict_all_actions_and_its_q_values[1] = V_of_S_for_every_state_ndarray[vertical_coord, tuple_state_for_searching[1]]
+    # Action RIGHT
+    horizontal_coord = tuple_state_for_searching[1] + 1    
+    if (horizontal_coord <= horizontal_dim - 1):
+        if (grid_world_ndarray[tuple_state_for_searching[0], horizontal_coord] != digit_for_representing_the_wall):
+            dict_all_actions_and_its_q_values[2] = V_of_S_for_every_state_ndarray[tuple_state_for_searching[0], horizontal_coord]
+    # Action DOWN
+    vertical_coord = tuple_state_for_searching[0] + 1    
+    if (vertical_coord <= vertical_dim - 1):
+        if (grid_world_ndarray[vertical_coord, tuple_state_for_searching[1]] != digit_for_representing_the_wall):
+            dict_all_actions_and_its_q_values[3] = V_of_S_for_every_state_ndarray[vertical_coord, tuple_state_for_searching[1]]
+    # Action LEFT
+    horizontal_coord = tuple_state_for_searching[1] - 1    
+    if (horizontal_coord >= 0):
+        if (grid_world_ndarray[tuple_state_for_searching[0], horizontal_coord] != digit_for_representing_the_wall):
+            dict_all_actions_and_its_q_values[4] = V_of_S_for_every_state_ndarray[tuple_state_for_searching[0], horizontal_coord]
     
-    global min_value
-
-    reached_terminal_state_boolean = True
-
-    state_vert_coord = vertical_dim - 1
-    state_horizont_coord  = 0
-    
-    grid_best_policy_ndrray[state_vert_coord, state_horizont_coord] = 1
-    v_of_s_tuple = (state_vert_coord, state_horizont_coord)
-    state_s1 = v_of_s_tuple
-    state_s2 = 0
-    state_s3 = 0
-
-    actions_of_state_tuple = find_all_actions_of_the_state(v_of_s_tuple)
-    while not (terminal_states[0] in actions_of_state_tuple):
-
-        # print(f"possible actions {actions_of_state_tuple} for state {v_of_s_tuple}")
-        v_of_s_tuple =  actions_of_state_tuple[0]
-        for action in actions_of_state_tuple[1:]:
-            if V_of_S_for_every_state_ndarray[action] > V_of_S_for_every_state_ndarray[v_of_s_tuple]:
-                v_of_s_tuple = action
-        grid_best_policy_ndrray[v_of_s_tuple] = 1
-
-        # Check if the best action lead to the visited state previously, and thtat confirms internal loop between twostates with two actions
-        if state_s2 == 0:
-            state_s2 = v_of_s_tuple
-        elif state_s3 == 0:
-            state_s3 = v_of_s_tuple
+    if tuple_state_for_searching == (0, horizontal_dim - 2):
+        return 2
+    else:
+        if len(dict_all_actions_and_its_q_values) != 0:
+            return max(dict_all_actions_and_its_q_values, key=dict_all_actions_and_its_q_values.get)
         else:
-            state_s1 = state_s2
-            state_s2 = state_s3
-            state_s3 = v_of_s_tuple
-            # input('next')
-        if state_s3 == state_s1:
-            print(f'Looping between to states, cant proceed. S1 S2 S3 = {state_s1} {state_s2} {state_s3}')
-            min_value = min_value / 10
-            print(f"min_value {min_value}\n")
-            reached_terminal_state_boolean = False
-            break
+            return 5
 
-        actions_of_state_tuple = find_all_actions_of_the_state(v_of_s_tuple)
+# announcing policy of allstates and will represent action UP by 1, action RIGHT by 2, action DOWN by 3, action LEFT by 4, no action by 5
+grid_policy_states_ndarray = np.zeros((vertical_dim,horizontal_dim))
+policy_fill_the_grid_states_with_actions()
+# print(grid_policy_states_ndarray)
+plt.figure(dpi=500, frameon=False)
+plt.imshow(grid_policy_states_ndarray, interpolation='none')
+plt.savefig('best_policy_max_q_of_every_state_in_grid_world.png')
 
-    # Returns here True if reached terminal state
-    return reached_terminal_state_boolean
 
-found_terminal_state = False
-cycle_step = 0
-while (found_terminal_state == False) and (cycle_step < 50):
+def improvement_of_policy ():
+    """
+    Trying to improove the policy of all states
+    """
+    policy_improved_boolean = True
+    for state_vertical in range(horizontal_dim):
+        for state_horizontal in range(vertical_dim):
+            if (not ((state_vertical, state_horizontal) in terminal_states)) and (grid_world_ndarray[state_vertical, state_horizontal] != digit_for_representing_the_wall):
+                if grid_policy_states_ndarray[state_vertical, state_horizontal] != find_best_action_of_the_state((state_vertical, state_horizontal)):
+                    grid_policy_states_ndarray[state_vertical, state_horizontal] = find_best_action_of_the_state((state_vertical, state_horizontal))
+                else:
+                    policy_improved_boolean = False
+    return policy_improved_boolean
+
+# Loop thru policy evaluation and policy improvement
+policy_improved_boolean = True
+while policy_improved_boolean == True:
     iterative_policy_evaluation()
-    print("finished Iterative policy evaluation")
-    grid_best_policy_ndrray = np.zeros((vertical_dim,horizontal_dim))
-    found_terminal_state = search_best_policy_as_best_action_of_every_state_of_the_policy()
-    cycle_step += 1
+    policy_improved_boolean = improvement_of_policy()
+    if policy_improved_boolean == True:
+        print(grid_policy_states_ndarray)
+        plt.imshow(grid_policy_states_ndarray, interpolation='none')
+        plt.savefig('best_policy_max_q_of_every_state_in_grid_world.png')
+        input("next")
 
-merged_grid_world_best_policy_for_visualising = grid_world_ndarray + grid_best_policy_ndrray
-merged_grid_world_best_policy_for_visualising[terminal_states[0]] = 3
-merged_grid_world_best_policy_for_visualising[terminal_states[1]] = 4
-plt.imshow(merged_grid_world_best_policy_for_visualising, interpolation='none')
-plt.savefig('policy_not_the_best_that_leads_to_exit_in_grid_world.png')
+
