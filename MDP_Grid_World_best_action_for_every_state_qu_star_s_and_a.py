@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import sys
 import pandas as pd
 
-vertical_dim = 50
-horizontal_dim = 50
+vertical_dim = 20
+horizontal_dim = 20
 digit_for_representing_the_wall = 2
 
 
@@ -105,8 +105,8 @@ def policy_fill_the_grid_states_with_actions ():
     """
     Looping thru all states of the state space and finding the best action for every state
     """
-    for state_vertical in range(horizontal_dim):
-        for state_horizontal in range(vertical_dim):
+    for state_vertical in range(vertical_dim):
+        for state_horizontal in range(horizontal_dim):
             if (not ((state_vertical, state_horizontal) in terminal_states)) and (grid_world_ndarray[state_vertical, state_horizontal] != digit_for_representing_the_wall):
                 grid_policy_states_ndarray[state_vertical, state_horizontal] = find_best_action_of_the_state((state_vertical, state_horizontal))
 
@@ -157,8 +157,8 @@ def improvement_of_policy ():
     Trying to improove the policy of all states
     """
     policy_improved_boolean = True
-    for state_vertical in range(horizontal_dim):
-        for state_horizontal in range(vertical_dim):
+    for state_vertical in range(vertical_dim):
+        for state_horizontal in range(horizontal_dim):
             if (not ((state_vertical, state_horizontal) in terminal_states)) and (grid_world_ndarray[state_vertical, state_horizontal] != digit_for_representing_the_wall):
                 if grid_policy_states_ndarray[state_vertical, state_horizontal] != find_best_action_of_the_state((state_vertical, state_horizontal)):
                     grid_policy_states_ndarray[state_vertical, state_horizontal] = find_best_action_of_the_state((state_vertical, state_horizontal))
@@ -177,9 +177,16 @@ while policy_improved_boolean == True:
         input("next")
 
 
-x,y = np.meshgrid(np.arange(vertical_dim), np.arange(horizontal_dim))
+x,y = np.meshgrid(np.arange(horizontal_dim), np.arange(vertical_dim))
 v, u = np.zeros((vertical_dim,horizontal_dim)), np.zeros((vertical_dim,horizontal_dim))
 
+# print("\nx\n")
+# print(x)
+# print("\ny\n")
+# print(y)
+# print("next")
+# print("\nv\n")
+# print(v)
 
 for vertical_element in range(vertical_dim):
     for horizontal_element in range(horizontal_dim):
@@ -198,7 +205,5 @@ for vertical_element in range(vertical_dim):
             u[vertical_dim - 1 - vertical_element, horizontal_element] = 0
                 
 fig, ax = plt.subplots()
-q = ax.quiver(x,y,v,u, units='width')
-# plt.figure(dpi=100, frameon=False)
-# plt.figure(figsize=(20,20), dpi=200)
-plt.savefig('best_policy_max_q_of_every_state_in_grid_world_arrows.png', dpi=800)
+q = ax.quiver(x,y,v,u)
+plt.savefig('best_policy_max_q_of_every_state_in_grid_world_arrows.png', dpi=150)
