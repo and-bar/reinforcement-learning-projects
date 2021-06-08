@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import sys
 import pandas as pd
 
-vertical_dim = 100
-horizontal_dim = 100
+vertical_dim = 50
+horizontal_dim = 50
 digit_for_representing_the_wall = 2
 
 
@@ -20,6 +20,8 @@ while counter_walls <= int(vertical_dim*horizontal_dim*0.2):
     counter_walls += 1
 
 # cleaning walls in start space and terminal spaces areas
+grid_world_ndarray[0,horizontal_dim - 1] = 0
+grid_world_ndarray[0,horizontal_dim - 2] = 0
 grid_world_ndarray[1,horizontal_dim - 1] = 0
 grid_world_ndarray[1,horizontal_dim - 2] = 0
 grid_world_ndarray[vertical_dim-1,0] = 0
@@ -72,7 +74,7 @@ def iterative_policy_evaluation():
     """
     Calculating V of S for every state in state space
     """    
-    min_value = 0.0001 # when traspasing this value to the less then stop while loop
+    min_value = 0.000000000001 # when traspasing this value to the less then stop while loop
     delta_max = min_value + 1
     gamma_value = 0.9
     while delta_max >= min_value:
@@ -150,7 +152,6 @@ plt.figure(dpi=500, frameon=False)
 plt.imshow(grid_policy_states_ndarray, interpolation='none')
 plt.savefig('best_policy_max_q_of_every_state_in_grid_world.png')
 
-
 def improvement_of_policy ():
     """
     Trying to improove the policy of all states
@@ -171,9 +172,33 @@ while policy_improved_boolean == True:
     iterative_policy_evaluation()
     policy_improved_boolean = improvement_of_policy()
     if policy_improved_boolean == True:
-        print(grid_policy_states_ndarray)
         plt.imshow(grid_policy_states_ndarray, interpolation='none')
         plt.savefig('best_policy_max_q_of_every_state_in_grid_world.png')
         input("next")
 
 
+x,y = np.meshgrid(np.arange(vertical_dim), np.arange(horizontal_dim))
+v, u = np.zeros((vertical_dim,horizontal_dim)), np.zeros((vertical_dim,horizontal_dim))
+
+
+for vertical_element in range(vertical_dim):
+    for horizontal_element in range(horizontal_dim):
+        action = grid_policy_states_ndarray[vertical_element, horizontal_element]
+        if action == 1:
+            v[vertical_dim - 1 - vertical_element, horizontal_element] = 0
+            u[vertical_dim - 1 - vertical_element, horizontal_element] = 1
+        elif action == 2:
+            v[vertical_dim - 1 - vertical_element, horizontal_element] = 1
+            u[vertical_dim - 1 - vertical_element, horizontal_element] = 0
+        elif action == 3:
+            v[vertical_dim - 1 - vertical_element, horizontal_element] = 0
+            u[vertical_dim - 1 - vertical_element, horizontal_element] = -1
+        elif action == 4:
+            v[vertical_dim - 1 - vertical_element, horizontal_element] = -1
+            u[vertical_dim - 1 - vertical_element, horizontal_element] = 0
+                
+fig, ax = plt.subplots()
+q = ax.quiver(x,y,v,u, units='width')
+# plt.figure(dpi=100, frameon=False)
+# plt.figure(figsize=(20,20), dpi=200)
+plt.savefig('best_policy_max_q_of_every_state_in_grid_world_arrows.png', dpi=800,figsize=(10,10))
