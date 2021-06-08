@@ -180,14 +180,6 @@ while policy_improved_boolean == True:
 x,y = np.meshgrid(np.arange(horizontal_dim), np.arange(vertical_dim))
 v, u = np.zeros((vertical_dim,horizontal_dim)), np.zeros((vertical_dim,horizontal_dim))
 
-# print("\nx\n")
-# print(x)
-# print("\ny\n")
-# print(y)
-# print("next")
-# print("\nv\n")
-# print(v)
-
 for vertical_element in range(vertical_dim):
     for horizontal_element in range(horizontal_dim):
         action = grid_policy_states_ndarray[vertical_element, horizontal_element]
