@@ -2,8 +2,8 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 
-vertical_dim = 30
-horizontal_dim = 30
+vertical_dim = 100
+horizontal_dim = 100
 digit_for_representing_the_wall = 2
 
 
@@ -200,6 +200,5 @@ while policy_improved_boolean:
     iterative_policy_evaluation()
     policy_improved_boolean = improvement_of_policy()
     print(f"If policy improoved? {policy_improved_boolean}")
-    if policy_improved_boolean == True:
-        print_policy_from_the_grid_of_action_states ('best_policy_max_q_of_every_state_in_grid_world '+str(n_of_png)+'.png')
+print_policy_from_the_grid_of_action_states ('best_policy_max_q_of_every_state_in_grid_world '+str(n_of_png)+'.png')
 
