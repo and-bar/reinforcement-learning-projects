@@ -193,12 +193,12 @@ def iterative_policy_evaluation():
 
 # Loop thru policy evaluation and policy improvement
 n_of_png = 0
-print_policy_from_the_grid_of_action_states ('best_policy_max_q_of_every_state_in_grid_world '+str(n_of_png)+'.png')
+print_policy_from_the_grid_of_action_states ('policy_iteration_best_policy_max_q_of_every_state_in_grid_world '+str(n_of_png)+'.png')
 policy_improved_boolean = True
 while policy_improved_boolean:
     n_of_png += 1
     iterative_policy_evaluation()
     policy_improved_boolean = improvement_of_policy()
     print(f"If policy improoved? {policy_improved_boolean}")
-print_policy_from_the_grid_of_action_states ('best_policy_max_q_of_every_state_in_grid_world '+str(n_of_png)+'.png')
+print_policy_from_the_grid_of_action_states ('policy_iteration_best_policy_max_q_of_every_state_in_grid_world '+str(n_of_png)+'.png')
 
