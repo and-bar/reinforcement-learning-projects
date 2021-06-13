@@ -2,8 +2,8 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 
-vertical_dim = 100
-horizontal_dim = 100
+vertical_dim = 200
+horizontal_dim = 200
 digit_for_representing_the_wall = 2
 
 
@@ -35,8 +35,8 @@ rewards_ndarray[1,horizontal_dim - 1] = -1
 def find_all_actions_of_the_state(tuple_state_for_searching):
     """
     Check for possible action up, left, down, right from current state
-    If can make action adding tuple of coordinate of that action to the list
-    of all posible actions.
+    If can make action adding tuple of coordinates of that action to the list
+    of all posible actions and adding its corresponding action.
     First check if action do not guide out of the grid
     Second check if action do not guide to the wall
     If action comply with this conditions add coordinates of the
@@ -67,17 +67,6 @@ def find_all_actions_of_the_state(tuple_state_for_searching):
     
     return list_of_tuple_actions
 
-def policy_fill_the_grid_states_with_random_actions ():
-    """
-    Looping thru all states of the state space and assigning the random action for every state
-    """
-    for state_vertical in range(vertical_dim):
-        for state_horizontal in range(horizontal_dim):
-            if (not ((state_vertical, state_horizontal) in terminal_states)) and (grid_world_ndarray[state_vertical, state_horizontal] != digit_for_representing_the_wall):
-                list_of_actions_of_the_state = find_all_actions_of_the_state((state_vertical, state_horizontal))
-                if len(list_of_actions_of_the_state) != 0:
-                    grid_policy_states_ndarray[state_vertical, state_horizontal] = (random.choice(list_of_actions_of_the_state))[1]
-
 def print_policy_from_the_grid_of_action_states (name_of_the_file_png):
     """
     takes ndarray, get every digit from the cell that representing up or right or down or left
@@ -104,12 +93,38 @@ def print_policy_from_the_grid_of_action_states (name_of_the_file_png):
                     
     fig, ax = plt.subplots()
     q = ax.quiver(x,y,v,u)
-    plt.savefig(name_of_the_file_png, dpi=300)
+    plt.savefig(name_of_the_file_png, dpi=2000)
 
-# announcing policy of allstates and will represent action UP by 1, action RIGHT by 2, action DOWN by 3, action LEFT by 4, no action by 5
-grid_policy_states_ndarray = np.zeros((vertical_dim,horizontal_dim))
-policy_fill_the_grid_states_with_random_actions()
-print_policy_from_the_grid_of_action_states("random action for the state or random policy.png")
+# Executing Iterative Policy Evaluation of Bellman optimality equation
+def iterative_policy_evaluation_of_bellman_optimality_equation():
+    """
+    Calculating V* of S for every state in state space
+    """    
+    min_value = 0.1 # when traspasing this value to the less then stop while loop
+    delta_max = min_value + 1
+    gamma_value = 0.9
+    while delta_max >= min_value:
+        delta_max = 0
+        for vertical_item in range(vertical_dim):
+            for horizontal_item in range(horizontal_dim):
+                # If its not a terminal state and its not the wall               
+                if (not ((vertical_item, horizontal_item) in terminal_states)) and (grid_world_ndarray[vertical_item, horizontal_item] != digit_for_representing_the_wall):                    
+                    action_list_tuple = find_all_actions_of_the_state((vertical_item, horizontal_item))
+                    if len(action_list_tuple) != 0:
+                        p_s_prime_r_given_s_and_a_for_for_every_s_prime = 1 / len(action_list_tuple) # conditioning equal distribution of all s' from s and a
+                    else:
+                        p_s_prime_r_given_s_and_a_for_for_every_s_prime = 1
+                    list_k_plus_1_v_of_s = []
+                    if len(action_list_tuple) != 0:
+                        for element_action in action_list_tuple:                    
+                            list_k_plus_1_v_of_s.append( p_s_prime_r_given_s_and_a_for_for_every_s_prime * (rewards_ndarray[element_action[0][0], element_action[0][1]] + gamma_value * V_of_S_for_every_state_ndarray[element_action[0][0], element_action[0][1]]) ) 
+                        v_of_s_old = V_of_S_for_every_state_ndarray[vertical_item, horizontal_item]
+                        V_of_S_for_every_state_ndarray[vertical_item, horizontal_item] = max(list_k_plus_1_v_of_s)
+                        difference_VSk1_and_VSk = abs(v_of_s_old - V_of_S_for_every_state_ndarray[vertical_item, horizontal_item])
+                    if difference_VSk1_and_VSk > delta_max:
+                        delta_max = difference_VSk1_and_VSk
+        if delta_max < min_value:
+            break
 
 def find_best_action_of_the_state (tuple_state_for_searching):
     """
@@ -147,58 +162,16 @@ def find_best_action_of_the_state (tuple_state_for_searching):
         else:
             return (5, V_of_S_for_every_state_ndarray[tuple_state_for_searching])
 
-def improvement_of_policy ():
+def find_optimal_policy ():
     """
-    Trying to improove the policy of all states
+    Finding optimal V or V* and its action for every state in all states space
     """
-    policy_improved_boolean = False
     for state_vertical in range(vertical_dim):
         for state_horizontal in range(horizontal_dim):
             if (not ((state_vertical, state_horizontal) in terminal_states)) and (grid_world_ndarray[state_vertical, state_horizontal] != digit_for_representing_the_wall):
-                s_a_old = grid_policy_states_ndarray[(state_vertical, state_horizontal)]
                 grid_policy_states_ndarray[(state_vertical, state_horizontal)] =  (find_best_action_of_the_state((state_vertical, state_horizontal)))[0]
-                if grid_policy_states_ndarray[(state_vertical, state_horizontal)] != s_a_old:
-                    policy_improved_boolean = True
-    return policy_improved_boolean
 
-# Executing Iterative Policy Evaluation
-def iterative_policy_evaluation():
-    """
-    Calculating V of S for every state in state space
-    """    
-    min_value = 0.1 # when traspasing this value to the less then stop while loop
-    delta_max = min_value + 1
-    gamma_value = 0.9
-    while delta_max >= min_value:
-        delta_max = 0
-        for vertical_item in range(vertical_dim):
-            for horizontal_item in range(horizontal_dim):
-                # If its not a terminal state and its not the wall               
-                if (not ((vertical_item, horizontal_item) in terminal_states)) and (grid_world_ndarray[vertical_item, horizontal_item] != digit_for_representing_the_wall):                    
-                    action_list_tuple = find_all_actions_of_the_state((vertical_item, horizontal_item))
-                    if len(action_list_tuple) != 0:
-                        p_s_prime_r_given_s_and_a_for_for_every_s_prime = 1 / len(action_list_tuple) # conditioning equal distribution of all s' from s and a
-                    else:
-                        p_s_prime_r_given_s_and_a_for_for_every_s_prime = 1
-                    V_of_S_k_plus_one = 0
-                    for element_action in action_list_tuple:                    
-                        V_of_S_k_plus_one = V_of_S_k_plus_one + p_s_prime_r_given_s_and_a_for_for_every_s_prime * (rewards_ndarray[element_action[0][0], element_action[0][1]] + gamma_value * V_of_S_for_every_state_ndarray[element_action[0][0], element_action[0][1]])
-                    difference_VSk1_and_VSk = abs(V_of_S_for_every_state_ndarray[vertical_item, horizontal_item] - V_of_S_k_plus_one)
-                    if difference_VSk1_and_VSk > delta_max:
-                        delta_max = difference_VSk1_and_VSk
-                    V_of_S_for_every_state_ndarray[vertical_item, horizontal_item] = V_of_S_k_plus_one
-
-        if delta_max < min_value:
-            break
-
-# Loop thru policy evaluation and policy improvement
-n_of_png = 0
-print_policy_from_the_grid_of_action_states ('policy_iteration_best_policy_max_q_of_every_state_in_grid_world '+str(n_of_png)+'.png')
-policy_improved_boolean = True
-while policy_improved_boolean:
-    n_of_png += 1
-    iterative_policy_evaluation()
-    policy_improved_boolean = improvement_of_policy()
-    print(f"If policy improoved? {policy_improved_boolean}")
-print_policy_from_the_grid_of_action_states ('policy_iteration_best_policy_max_q_of_every_state_in_grid_world '+str(n_of_png)+'.png')
-
+iterative_policy_evaluation_of_bellman_optimality_equation()
+grid_policy_states_ndarray = np.zeros((vertical_dim,horizontal_dim))
+find_optimal_policy ()
+print_policy_from_the_grid_of_action_states ("optimal_policy_from_value_iteration_algorithm.png")

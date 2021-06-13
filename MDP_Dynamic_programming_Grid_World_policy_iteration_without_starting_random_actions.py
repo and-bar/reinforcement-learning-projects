@@ -1,8 +1,6 @@
 import numpy as np
 import random
 import matplotlib.pyplot as plt
-import sys
-import pandas as pd
 
 vertical_dim = 20
 horizontal_dim = 20
@@ -150,7 +148,7 @@ policy_fill_the_grid_states_with_actions()
 # print(grid_policy_states_ndarray)
 plt.figure(dpi=500, frameon=False)
 plt.imshow(grid_policy_states_ndarray, interpolation='none')
-plt.savefig('best_policy_max_q_of_every_state_in_grid_world.png')
+plt.savefig('best_policy_max_q_of_every_state_in_grid_world_random_actions.png')
 
 def improvement_of_policy ():
     """
