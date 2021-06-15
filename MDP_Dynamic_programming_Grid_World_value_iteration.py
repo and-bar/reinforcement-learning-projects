@@ -175,3 +175,4 @@ iterative_policy_evaluation_of_bellman_optimality_equation()
 grid_policy_states_ndarray = np.zeros((vertical_dim,horizontal_dim))
 find_optimal_policy ()
 print_policy_from_the_grid_of_action_states ("optimal_policy_from_value_iteration_algorithm.png")
+
