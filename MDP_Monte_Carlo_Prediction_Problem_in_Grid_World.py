@@ -2,8 +2,8 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 
-vertical_dim = 8
-horizontal_dim = 8
+vertical_dim = 5
+horizontal_dim = 5
 digit_for_representing_the_wall = 9
 
 
@@ -32,7 +32,7 @@ v_of_s_for_every_state_ndarray = np.zeros([vertical_dim, horizontal_dim])
 
 # Creating grid of rewards of every state
 rewards_ndarray = np.random.randint(-1,0, [vertical_dim, horizontal_dim])
-rewards_ndarray[0,horizontal_dim - 1] = 100
+rewards_ndarray[0,horizontal_dim - 1] = 1
 rewards_ndarray[1,horizontal_dim - 1] = -1
 
 def find_all_actions_of_the_state(tuple_state_for_searching):
@@ -94,10 +94,11 @@ def print_policy_from_the_grid_of_action_states (name_of_the_file_png):
                 u[vertical_dim - 1 - vertical_element, horizontal_element] = -1
             elif action == 4:
                 v[vertical_dim - 1 - vertical_element, horizontal_element] = -1
-                u[vertical_dim - 1 - vertical_element, horizontal_element] = 0
-                    
+                u[vertical_dim - 1 - vertical_element, horizontal_element] = 0                    
+    
     fig, ax = plt.subplots()
     q = ax.quiver(x,y,v,u,angles='xy', scale_units='xy', scale=1)
+    # plt.imshow(grid_world_ndarray, interpolation='none')
     plt.savefig(name_of_the_file_png, dpi=100)
 
 def get_random_action_from_state(vertical_coord, horizontal_coord):
@@ -116,16 +117,16 @@ def get_random_action_from_state(vertical_coord, horizontal_coord):
     else:
         return None
 
-n_of_steps_of_episode = 100
-
 list_states_actions_of_initial_random_policy = []
 
-def get_random_policy_from_initial_state(vertical_coord, horizontal_coord):
+def get_random_policy_from_initial_state_and_find_returns(vertical_coord, horizontal_coord):
     """
     Get start state and build up random actions for every next state
     """
     step = 0
-    previous_state = (-1, -1) # initial state out of the grid world
+    global list_states_actions_of_initial_random_policy
+    list_states_actions_of_initial_random_policy= []
+    n_of_steps_of_episode = 300
     while step <= n_of_steps_of_episode:
         next_action_state_pair_tuple = get_random_action_from_state(vertical_coord, horizontal_coord)
         if next_action_state_pair_tuple != None:
@@ -135,22 +136,75 @@ def get_random_policy_from_initial_state(vertical_coord, horizontal_coord):
             horizontal_coord = next_action_state_pair_tuple[0][1]
             step += 1
         else:
+            #from this state can't make any valuable action, thou making random terminal action
+            grid_policy_states_ndarray[vertical_coord, horizontal_coord] = random.choice([1,2,3,4])
             break
         if next_action_state_pair_tuple[0] in terminal_states:
             break
+    gamma = 0.9
+    g_return = 0
+    for state in list_states_actions_of_initial_random_policy[::-1]:
+        v_of_s_for_every_state_ndarray[state[0]] = rewards_ndarray[state[1][0]] + gamma * g_return
+        g_return += v_of_s_for_every_state_ndarray[state[0]]
 
-vertical_coord = vertical_dim - 1
-horizontal_coord = 0
+def create_random_policy_for_every_state ():
+    """
+    Creating random policy with random action for every state
+    """
+    for vertical_element in range(vertical_dim):
+        for horizontal_element in range(horizontal_dim):
+            if (vertical_element, horizontal_element) not in terminal_states:
+                #creating random policy
+                if (grid_policy_states_ndarray[vertical_element, horizontal_element] == 0) and ((vertical_element, horizontal_element) not in terminal_states) and grid_world_ndarray[vertical_element, horizontal_element] != digit_for_representing_the_wall:
+                    get_random_policy_from_initial_state_and_find_returns(vertical_element, horizontal_element)
 
-get_random_policy_from_initial_state(vertical_coord, horizontal_coord) 
+
+def evaluate_policy ():
+    """
+    Looping through every state-action of given random policy and seraching its avereged returns
+    """
+    treshold = 0.1
+    global samples_of_returns_ndarray
+    gamma = 0.9
+    while True:
+        delta_max = 0
+        for vertical_cell in range(vertical_dim):
+            for horizontal_cell in range(horizontal_dim):
+                if (vertical_cell, horizontal_cell) in terminal_states:
+                    continue
+                elif grid_policy_states_ndarray[vertical_cell, horizontal_cell] == 1 and vertical_cell-1 >= 0:
+                    s_prime_coord = (vertical_cell-1, horizontal_cell)
+                elif grid_policy_states_ndarray[vertical_cell, horizontal_cell] == 2 and horizontal_cell + 1 <= horizontal_dim - 1:
+                    s_prime_coord = (vertical_cell, horizontal_cell + 1)
+                elif grid_policy_states_ndarray[vertical_cell, horizontal_cell] == 3 and vertical_cell + 1 <= vertical_dim - 1:
+                    s_prime_coord = (vertical_cell + 1, horizontal_cell)
+                elif grid_policy_states_ndarray[vertical_cell, horizontal_cell] == 4 and horizontal_cell - 1 >= 0:
+                    s_prime_coord = (vertical_cell, horizontal_cell - 1)
+                else:
+                    s_prime_coord = (vertical_cell, horizontal_cell)
+                samples_of_returns_ndarray[vertical_cell, horizontal_cell] += 1
+                v_of_s_for_every_state_ndarray_old = v_of_s_for_every_state_ndarray[vertical_cell, horizontal_cell]
+                return_g = rewards_ndarray[s_prime_coord] + gamma * v_of_s_for_every_state_ndarray[s_prime_coord]
+                v_of_s_for_every_state_ndarray[vertical_cell, horizontal_cell] = v_of_s_for_every_state_ndarray_old + (return_g - v_of_s_for_every_state_ndarray_old)/samples_of_returns_ndarray[vertical_cell, horizontal_cell]
+                absolute_difference_vsk_plus_1_and_vsk = abs(v_of_s_for_every_state_ndarray[vertical_cell, horizontal_cell] - v_of_s_for_every_state_ndarray_old)
+                if delta_max < absolute_difference_vsk_plus_1_and_vsk:        
+                    delta_max = absolute_difference_vsk_plus_1_and_vsk
+        if delta_max <= treshold:
+            print(f"delta_max {delta_max}")
+            break
+
+create_random_policy_for_every_state ()
 print_policy_from_the_grid_of_action_states("MonteCarlostartingPolicy.png")
-print(f"list_states_actions_of_initial_random_policy {list_states_actions_of_initial_random_policy}")
 
-gamma = 0.9
-g_return = 0
-for state in list_states_actions_of_initial_random_policy[::-1]:
-    v_of_s_for_every_state_ndarray[state[0]] = rewards_ndarray[state[1][0]] + gamma * g_return
-    g_return += v_of_s_for_every_state_ndarray[state[0]]
-    print(f"state {state} v_of_s_for_every_state_ndarray[state[0]] {v_of_s_for_every_state_ndarray[state[0]]} ")
+plt.clf() #clear figure
+plt.imshow(grid_world_ndarray, interpolation='none')
+plt.savefig('grid_world.png')
+
+# ndarray with number of iterations of total returns for every state
+samples_of_returns_ndarray = np.zeros([vertical_dim, horizontal_dim])
+
+evaluate_policy()
+print(v_of_s_for_every_state_ndarray)
 
 print(grid_policy_states_ndarray)
+print(samples_of_returns_ndarray)
