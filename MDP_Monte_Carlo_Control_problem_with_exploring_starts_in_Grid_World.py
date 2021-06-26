@@ -55,7 +55,6 @@ def make_arrows_images_as_2d_x_n_numpy_array(images_names_list):
         image_layer += 1
     return ndarray_of_images
 
-@njit(parallel=True)
 def create_gridworld_ndarray_adding_walls_and_terminal_states(win_terminal_state, loose_terminal_state, starting_sate):
     """
     make numpy 2D array adding walls and terminal states
@@ -66,7 +65,7 @@ def create_gridworld_ndarray_adding_walls_and_terminal_states(win_terminal_state
     gridworld_ndarray = (np.arange(n_states_vertical * n_states_horizontal)).reshape((n_states_vertical, n_states_horizontal))
     gridworld_ndarray[:, :] = 8
 
-    n_of_walls_total = (n_states_vertical*n_states_horizontal)*0.1 # here 0.2 is 20% of total occupancy by walls in gridworld
+    n_of_walls_total = (n_states_vertical*n_states_horizontal)*0.2 # here 0.2 is 20% of total occupancy by walls in gridworld
     n_of_walls = 0
     while n_of_walls <= n_of_walls_total:
         vert_coord = random.randint(0, n_states_vertical)
@@ -75,11 +74,12 @@ def create_gridworld_ndarray_adding_walls_and_terminal_states(win_terminal_state
             gridworld_ndarray[vert_coord, hor_coord] = 5
             n_of_walls+=1
 
-    gridworld_ndarray[win_terminal_state] = 6
-    gridworld_ndarray[loose_terminal_state] = 7
-    gridworld_ndarray[starting_sate] = 9
+    gridworld_ndarray[win_terminal_state[0], win_terminal_state[1]] = 6
+    gridworld_ndarray[loose_terminal_state[0], loose_terminal_state[1]] = 7
+    gridworld_ndarray[starting_sate[0], starting_sate[1]] = 9
 
     gridworld_ndarray[win_terminal_state[0], win_terminal_state[1] - 1] = 8 # clear left state from wall of terminal state
+    gridworld_ndarray[win_terminal_state[0] + 1, win_terminal_state[1] - 1] = 8 # clear left, down state from wall of terminal state
     gridworld_ndarray[win_terminal_state[0] + 1, win_terminal_state[1]] = 8 # clear down state from wall of terminal state
     gridworld_ndarray[loose_terminal_state[0], loose_terminal_state[1] - 1] = 8 # clear left state from wall of terminal state
     gridworld_ndarray[loose_terminal_state[0] + 1, loose_terminal_state[1]] = 8 # clear down state from wall of terminal state
@@ -90,7 +90,6 @@ def create_gridworld_ndarray_adding_walls_and_terminal_states(win_terminal_state
 
     return gridworld_ndarray
 
-@njit
 def fill_grid_world_with_action_of_states(gridworld_ndarray):
     """
     fill states of gridworld with random actions: (1, 2, 3, 4)
@@ -101,7 +100,6 @@ def fill_grid_world_with_action_of_states(gridworld_ndarray):
                 gridworld_ndarray[vert_cell, horiz_cell] = random.randint(1,5)
     return gridworld_ndarray
 
-@njit
 def create_rewards_and_value_states__ndarray(win_terminal_state, win_terminal_state_reward, loose_terminal_state, loose_terminal_state_reward, reward_of_each_state):
     """
     make 3d array with 5 layers, zero layer for rewards, 1st for Q(s,a) action 'up', 2nd for Q(s,a) action 'right',  3d for Q(s,a) action 'down', 4nd for Q(s,a) action 'left',
@@ -247,18 +245,14 @@ def change_for_improoved_policy_for_every_state_of_grid_world(gridworld_ndarray,
 
     return gridworld_ndarray
         
-# @njit
-def play_one_episode(coord_of_states, gridworld_ndarray, rewards_plus_qsa_values_ndarray):
+@njit
+def play_one_episode(coord_of_states, gridworld_ndarray, rewards_plus_qsa_values_ndarray, win_terminal_state, loose_terminal_state):
     """
     play one episode of the game, update Q(s,a), policy, and cum of returns for every Q(s,a)
     """
     gamma = 0.9
     state_k_coord = coord_of_states[random.randint(0, len(coord_of_states))] # get random state from list of all possible states
     all_actions_of_the_state = find_all_actions_of_the_state(n_states_vertical, n_states_horizontal, state_k_coord, gridworld_ndarray)
-    state_k_coord = coord_of_states[random.randint(0, len(coord_of_states))] # get random state from list of all possible states
-    
-    # print("type of coord_of_states: ", type(coord_of_states))
-    # print("type of all_actions_of_the_state: ", type(all_actions_of_the_state))
     
     if len(all_actions_of_the_state) != 0: # starting state do not have any action to perform
         action_of_state = all_actions_of_the_state[random.randint(0, len(all_actions_of_the_state))] # get random action from starting state
@@ -274,7 +268,7 @@ def play_one_episode(coord_of_states, gridworld_ndarray, rewards_plus_qsa_values
 
             if  (action_of_state_coord in visited_states) or (gridworld_ndarray[action_of_state_coord[0], action_of_state_coord[1]] == 5): # visited states or wall
                 terminal_state_bool = True
-            elif action_of_state_coord in terminal_states:
+            elif (action_of_state_coord == win_terminal_state) or (action_of_state_coord == loose_terminal_state):
                 data_of_episode = List()
                 data_of_episode.append(state_k_coord[0])
                 data_of_episode.append(state_k_coord[1])
@@ -291,6 +285,7 @@ def play_one_episode(coord_of_states, gridworld_ndarray, rewards_plus_qsa_values
                 data_of_episode.append(action_of_state[0])
                 data_of_episode.append(action_of_state[1])
                 data_of_episode_list.append(data_of_episode)
+                
                 action_of_state_coord_list = List()
                 action_of_state_coord_list.append(action_of_state[0])
                 action_of_state_coord_list.append(action_of_state[1])
@@ -308,10 +303,10 @@ def play_one_episode(coord_of_states, gridworld_ndarray, rewards_plus_qsa_values
     
     return rewards_plus_qsa_values_ndarray, gridworld_ndarray
 
-# @njit(parallel = True)
-def play_from_random_s_a_save_returns_select_best_q_s_a (n_states_vertical, n_states_horizontal, rewards_plus_qsa_values_ndarray, gridworld_ndarray):
+@njit
+def get_coordenates_of_all_posible_states(n_states_vertical, n_states_horizontal, gridworld_ndarray, starting_sate):
     """
-    Control problem of Monte Carlo
+    make list of all possible states
     """
     coord_of_states = List()
     for vert_state in range(n_states_vertical):
@@ -321,22 +316,39 @@ def play_from_random_s_a_save_returns_select_best_q_s_a (n_states_vertical, n_st
                 coord_of_state.append(vert_state)
                 coord_of_state.append(horiz_state)
                 coord_of_states.append(coord_of_state)
-    
-    for step in range(10000):
-        rewards_plus_qsa_values_ndarray, gridworld_ndarray = play_one_episode(coord_of_states, gridworld_ndarray, rewards_plus_qsa_values_ndarray)
+    coord_of_states.append(starting_sate)
+    return coord_of_states
 
+@njit
+def play_from_random_s_a_save_returns_select_best_q_s_a (n_states_vertical, n_states_horizontal, rewards_plus_qsa_values_ndarray, gridworld_ndarray, win_terminal_state, loose_terminal_state, starting_sate):
+    """
+    Control problem of Monte Carlo
+    """
+    coord_of_states = get_coordenates_of_all_posible_states(n_states_vertical, n_states_horizontal, gridworld_ndarray, starting_sate)
+    step = 0
+    while step <= 1500:
+        rewards_plus_qsa_values_ndarray, gridworld_ndarray = play_one_episode(coord_of_states, gridworld_ndarray, rewards_plus_qsa_values_ndarray, win_terminal_state, loose_terminal_state)
+        if step%100 == 0:    
+            print("step: ", step)
+        step += 1
     return rewards_plus_qsa_values_ndarray, gridworld_ndarray
 
 image_size = 11
-n_states_vertical = 6
-n_states_horizontal = 6
-win_terminal_state = (0, n_states_vertical - 1) # position in gridworld
-loose_terminal_state = (2, n_states_vertical - 1) # position in gridworld
-starting_sate = (n_states_vertical - 1, 0) # position in gridworld
-win_terminal_state_reward = 100
-loose_terminal_state_reward = -100
-terminal_states = (win_terminal_state, loose_terminal_state)
-reward_of_each_state = -1
+n_states_vertical = 5
+n_states_horizontal = 5
+win_terminal_state = List() # position in gridworld
+win_terminal_state.append(0)
+win_terminal_state.append(n_states_vertical - 1)
+loose_terminal_state = List()  # position in gridworld
+loose_terminal_state.append(2)
+loose_terminal_state.append(n_states_vertical - 1)
+starting_sate = List() # position in gridworld
+starting_sate.append(n_states_vertical - 1)
+starting_sate.append(0)
+win_terminal_state_reward = 1
+loose_terminal_state_reward = -1
+terminal_states = [win_terminal_state, loose_terminal_state]
+reward_of_each_state = 0.001
 
 gridworld_ndarray = create_gridworld_ndarray_adding_walls_and_terminal_states(win_terminal_state, loose_terminal_state, starting_sate)
 gridworld_ndarray = fill_grid_world_with_action_of_states(gridworld_ndarray)
@@ -346,7 +358,7 @@ images_states_ndarray = make_arrows_images_as_2d_x_n_numpy_array([r"arrow_up.png
 grid_world_image_ndarray = create_ndarray_grid_world_image(n_states_vertical, n_states_horizontal, image_size, images_states_ndarray, gridworld_ndarray)
 save_image_to_file_from_ndarray(grid_world_image_ndarray, "_grid_world_start.png")
 
-rewards_plus_qsa_values_ndarray, gridworld_ndarray = play_from_random_s_a_save_returns_select_best_q_s_a (n_states_vertical, n_states_horizontal, rewards_plus_qsa_values_ndarray, gridworld_ndarray)
+rewards_plus_qsa_values_ndarray, gridworld_ndarray = play_from_random_s_a_save_returns_select_best_q_s_a (n_states_vertical, n_states_horizontal, rewards_plus_qsa_values_ndarray, gridworld_ndarray, win_terminal_state, loose_terminal_state, starting_sate)
 
 grid_world_image_ndarray = create_ndarray_grid_world_image(n_states_vertical, n_states_horizontal, image_size, images_states_ndarray, gridworld_ndarray)
 save_image_to_file_from_ndarray(grid_world_image_ndarray, "_grid_world_final.png")
