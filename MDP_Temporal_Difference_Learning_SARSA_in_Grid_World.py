@@ -205,6 +205,46 @@ def select_action_from_state_by_epsilon_and_coord_of_next_state(n_states_vertica
         return best_s_prime_and_a, gridworld_ndarray
 
 @njit
+def select_qsa_of_s_prime_by_epsilon_greedy_or_max_qsa(n_states_vertical, n_states_horizontal, gridworld_ndarray, s_prime_coord, rewards_plus_qsa_values_ndarray, epsilon_0_max_value_1):
+    """
+    get Q(s,a) value of s' by epsilob greedy or maximum Q(s,a)
+    epsilon_0_max_value_1 -> structure "0" for epsilon greedy "1" for max value
+    """
+    list_all_possible_actions_from_the_s_prime = find_all_actions_of_the_state(n_states_vertical, n_states_horizontal, s_prime_coord, gridworld_ndarray)
+    # structure of list_all_possible_actions_from_the_s_prime: [[coord, coord, action], [coord, coord, action]]
+    list_all_possible_actions_from_the_s_prime_for_random = list_all_possible_actions_from_the_s_prime.copy()
+
+    if len(list_all_possible_actions_from_the_s_prime) == 0:
+        return 0
+
+    best_qsa = rewards_plus_qsa_values_ndarray[list_all_possible_actions_from_the_s_prime[0][2], s_prime_coord[0], s_prime_coord[1]]
+    best_s_prime_and_a = list_all_possible_actions_from_the_s_prime[0]
+    list_all_possible_actions_from_the_s_prime.remove(list_all_possible_actions_from_the_s_prime[0])
+
+    if len(list_all_possible_actions_from_the_s_prime) != 0:
+        for coord_of_s_prime_and_action_from_s in list_all_possible_actions_from_the_s_prime:
+            if rewards_plus_qsa_values_ndarray[coord_of_s_prime_and_action_from_s[2], s_prime_coord[0], s_prime_coord[1]] > best_qsa:
+                best_qsa = rewards_plus_qsa_values_ndarray[coord_of_s_prime_and_action_from_s[2], s_prime_coord[0], s_prime_coord[1]]
+                best_s_prime_and_a = coord_of_s_prime_and_action_from_s
+
+    if epsilon_0_max_value_1 == 0:
+        epsilon = 0.15
+        if random.random() < epsilon:
+            # select random action
+            if len(list_all_possible_actions_from_the_s_prime_for_random) == 1:
+                return rewards_plus_qsa_values_ndarray[best_s_prime_and_a[2], s_prime_coord[0], s_prime_coord[1]]
+            else:
+                list_all_possible_actions_from_the_s_prime_for_random = list_all_possible_actions_from_the_s_prime_for_random.remove(best_s_prime_and_a)
+                best_s_prime_and_a = list_all_possible_actions_from_the_s_prime[random.randint(0, len(list_all_possible_actions_from_the_s_prime))]
+                return rewards_plus_qsa_values_ndarray[best_s_prime_and_a[2], s_prime_coord[0], s_prime_coord[1]]
+        else:
+            # select best action from state wich lead to Q*(s,a)
+            return rewards_plus_qsa_values_ndarray[best_s_prime_and_a[2], s_prime_coord[0], s_prime_coord[1]]
+
+    if epsilon_0_max_value_1 == 1:
+        return rewards_plus_qsa_values_ndarray[best_s_prime_and_a[2], s_prime_coord[0], s_prime_coord[1]]
+
+@njit
 def play_one_episode(n_states_vertical, n_states_horizontal, gridworld_ndarray, rewards_plus_qsa_values_ndarray, win_terminal_state, loose_terminal_state, s_state_coord):
     """
     play one episode of the game, update Q(s,a) for each visited state state
@@ -237,7 +277,8 @@ def play_one_episode(n_states_vertical, n_states_horizontal, gridworld_ndarray, 
         data_of_episode_list.append(data_of_episode)
         
         rewards_plus_qsa_values_ndarray[s_prime_coord_and_action_from_s_to_s_prime[2] + 4, s_state_coord[0],  s_state_coord[1]] += 1  # + 4 in line is for redirecting to the layer that corresponds to n returns collected so far for the corresponding action
-        rewards_plus_qsa_values_ndarray[s_prime_coord_and_action_from_s_to_s_prime[2], s_state_coord[0],  s_state_coord[1]] = rewards_plus_qsa_values_ndarray[s_prime_coord_and_action_from_s_to_s_prime[2], s_state_coord[0],  s_state_coord[1]] + alfa * (rewards_plus_qsa_values_ndarray[0, s_prime_coord_and_action_from_s_to_s_prime[0],  s_prime_coord_and_action_from_s_to_s_prime[1]] + gamma * value_q_s_prime_a_prime - rewards_plus_qsa_values_ndarray[s_prime_coord_and_action_from_s_to_s_prime[2], s_state_coord[0],  s_state_coord[1]])
+        epsilon_0_max_value_1 = 0
+        rewards_plus_qsa_values_ndarray[s_prime_coord_and_action_from_s_to_s_prime[2], s_state_coord[0],  s_state_coord[1]] = rewards_plus_qsa_values_ndarray[s_prime_coord_and_action_from_s_to_s_prime[2], s_state_coord[0],  s_state_coord[1]] + alfa * (rewards_plus_qsa_values_ndarray[0, s_prime_coord_and_action_from_s_to_s_prime[0],  s_prime_coord_and_action_from_s_to_s_prime[1]] + gamma * select_qsa_of_s_prime_by_epsilon_greedy_or_max_qsa(n_states_vertical, n_states_horizontal, gridworld_ndarray, s_prime_coord_and_action_from_s_to_s_prime, rewards_plus_qsa_values_ndarray, epsilon_0_max_value_1) - rewards_plus_qsa_values_ndarray[s_prime_coord_and_action_from_s_to_s_prime[2], s_state_coord[0],  s_state_coord[1]])
         
         if (s_prime_coord_and_action_from_s_to_s_prime[0:2] == win_terminal_state) or (s_prime_coord_and_action_from_s_to_s_prime[0:2] == loose_terminal_state):
             if s_prime_coord_and_action_from_s_to_s_prime[0:2] == win_terminal_state:
@@ -263,7 +304,7 @@ def play_from_start_s_save_returns_select_best_q_s_a (rewards_plus_qsa_values_nd
         rewards_plus_qsa_values_ndarray, gridworld_ndarray, played_from_start_state_and_reached_terminal_state, data_of_episode_list = play_one_episode(n_states_vertical, n_states_horizontal, gridworld_ndarray, rewards_plus_qsa_values_ndarray, win_terminal_state, loose_terminal_state, starting_sate)
         gridworld_ndarray = change_for_improoved_policy_for_every_state_of_grid_world(n_states_vertical, n_states_horizontal, gridworld_ndarray, rewards_plus_qsa_values_ndarray)
 
-        if step%10000 == 0:
+        if step%1 == 0:
             print("step: ", step)
             grid_world_image_ndarray = create_ndarray_grid_world_image(n_states_vertical, n_states_horizontal, image_size, images_states_ndarray, gridworld_ndarray)
             save_image_to_file_from_ndarray(grid_world_image_ndarray, "_grid_world_after_play_one_episode.png")
@@ -272,7 +313,11 @@ def play_from_start_s_save_returns_select_best_q_s_a (rewards_plus_qsa_values_nd
             gridworld_ndarray_for_image = find_way_from_start_to_terminal_state(n_states_vertical, n_states_horizontal, gridworld_ndarray, starting_sate, win_terminal_state)
             grid_world_image_ndarray = create_ndarray_grid_world_image(n_states_vertical, n_states_horizontal, image_size, images_states_ndarray, gridworld_ndarray_for_image)
             save_image_to_file_from_ndarray(grid_world_image_ndarray, "_grid_world_final_with_way_out.png")
-        
+
+            print(rewards_plus_qsa_values_ndarray)
+
+            input("next")
+
         step += 1
 
     return rewards_plus_qsa_values_ndarray, gridworld_ndarray
@@ -406,8 +451,8 @@ def save_image_to_file_from_ndarray(numpy_ndarray, name_file):
     img.save(name_file)
 
 image_size = 11
-n_states_vertical = 15
-n_states_horizontal = 15
+n_states_vertical = 6
+n_states_horizontal = 6
 win_terminal_state = List() # position in gridworld
 win_terminal_state.append(0)
 win_terminal_state.append(n_states_vertical - 1)
