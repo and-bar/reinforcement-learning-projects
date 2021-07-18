@@ -465,8 +465,8 @@ def save_image_to_file_from_ndarray(numpy_ndarray, name_file):
     img.save(name_file)
 
 image_size = 11
-n_states_vertical = 20
-n_states_horizontal = 20
+n_states_vertical = 15
+n_states_horizontal = 15
 win_terminal_state = List() # position in gridworld
 win_terminal_state.append(0)
 win_terminal_state.append(n_states_vertical - 1)
