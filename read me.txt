@@ -1,6 +1,4 @@
-As have seen from experiments with iterative policy evaluation in Dynamic programming, the best policy that leads to exit in griid vorld depends on
-treshold of the exit from the loop that > than Delta. The less is treshold the better policy is.
-And also the more is reward of terminal state, the treshold is more bigger for finding terminal state.
+Some algorithm implementation of Reinforcement Learning.
 
 
 
